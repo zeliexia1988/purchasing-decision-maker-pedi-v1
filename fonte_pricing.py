@@ -80,7 +80,7 @@ def load_fonte(path=FICHIER):
 
 
 def render_fonte_pricing():
-    st.title("🔩 Prix net Fonte ductile par région")
+    st.title("Tuyaux Fonte Prix maximum conseillé")
 
     try:
         df, regions = load_fonte()
@@ -152,8 +152,8 @@ def render_fonte_pricing():
                 "Fournisseur": f"{fournisseur} ({long_u:g} m/tuyau)",
                 "Produit": nom,
                 f"Prix net {region}": fmt_unit(net),
-                "Prix mini PAM": fmt_unit(mini) if is_pam else "—",
-                "Prix maxi PAM": fmt_unit(maxi) if is_pam else "—",
+                "Prix net mini PAM": fmt_unit(mini) if is_pam else "—",
+                "Prix net maxi PAM": fmt_unit(maxi) if is_pam else "—",
             })
 
             def fmt_total(v):
@@ -166,9 +166,9 @@ def render_fonte_pricing():
             total_rows.append({
                 "Fournisseur": f"{fournisseur} ({long_u:g} m/tuyau)",
                 "Produit": nom,
-                f"Prix net {region}": fmt_total(net),
-                "Prix mini PAM": fmt_total(mini) if is_pam else "—",
-                "Prix maxi PAM": fmt_total(maxi) if is_pam else "—",
+                f"Prix net Totaux {region}": fmt_total(net),
+                "Prix net Totaux mini PAM": fmt_total(mini) if is_pam else "—",
+                "Prix net Totaux maxi PAM": fmt_total(maxi) if is_pam else "—",
             })
 
     if nc_flag:
