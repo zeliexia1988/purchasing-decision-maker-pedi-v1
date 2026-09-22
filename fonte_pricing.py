@@ -11,7 +11,6 @@ def _norm(c):
 
 
 def _to_rate(x):
-    """折扣率 -> 0~1 的小数；NC 或空值 -> None"""
     if pd.isna(x):
         return None
     try:
@@ -50,11 +49,20 @@ def load_fonte(path=FICHIER):
         raise ValueError(f"Colonnes introuvables ({missing}) dans {path}. "
                           f"Colonnes lues : {list(df.columns)}")
 
+    # 合并单元格（Gamme/DN/Classe/Long 只在区块第一行有值，下方为空）向下填充
+    if c_gamme:
+        df[c_gamme] = df[c_gamme].ffill()
+    df[c_dn] = df[c_dn].ffill()
+    df[c_cl] = df[c_cl].ffill()
+    df[c_len] = df[c_len].ffill()
+
     code_cols = [c for c in df.columns if "code" in c.lower()]
     fixed = [c for c in [c_gamme, c_dn, c_len, c_cl, c_seul, c_std, c_vi, c_frn] if c] + code_cols
     regions = [c for c in df.columns if c not in fixed]
 
-    df = df.dropna(subset=[c_dn]).copy()
+    # 只有价格三列全空、且供应商也空的行才算真正的空行，才丢弃
+    df = df.dropna(subset=[c_frn, c_seul, c_std, c_vi], how="all").copy()
+
     df["DN"] = pd.to_numeric(df[c_dn], errors="coerce")
     df = df.dropna(subset=["DN"])
     df["DN"] = df["DN"].astype(int)
@@ -72,7 +80,7 @@ def load_fonte(path=FICHIER):
 
 
 def render_fonte_pricing():
-    st.title("🔩 Tuyaux Fonte Ductile Prix maximum conseillé")
+    st.title("🔩 Prix net Fonte ductile par région")
 
     try:
         df, regions = load_fonte()
@@ -88,6 +96,10 @@ def render_fonte_pricing():
     gamme = c0.selectbox("Gamme", gammes)
     df_g = df[df["Gamme"] == gamme]
 
+    if df_g.empty:
+        st.warning(f"Aucune ligne trouvée pour la gamme {gamme}.")
+        return
+
     dn = c1.selectbox("DN", sorted(df_g["DN"].unique()))
     df_dn = df_g[df_g["DN"] == dn]
 
@@ -101,9 +113,6 @@ def render_fonte_pricing():
         st.warning("Aucune donnée pour cette combinaison.")
         return
 
-    long_u = rows["Long"].iloc[0] if pd.notna(rows["Long"].iloc[0]) else 6
-    nb_tuyaux = math.ceil(qty / long_u) if qty and long_u else 0
-
     produits = [("Tuyau seul", "P_seul"), ("Tuyau + joint STD", "P_std"), ("Tuyau + joint STD Vi", "P_vi")]
 
     unit_rows = []
@@ -113,6 +122,8 @@ def render_fonte_pricing():
     for _, row in rows.iterrows():
         fournisseur = row["Fournisseur"]
         is_pam = _is_pam(fournisseur)
+        long_u = row["Long"] if pd.notna(row["Long"]) else 6
+        nb_tuyaux = math.ceil(qty / long_u) if qty and long_u else 0
 
         rem_region = row[region] if is_pam else None
         rem_values = [row[r] for r in regions if row[r] is not None] if is_pam else []
@@ -132,41 +143,43 @@ def render_fonte_pricing():
                 mini = cat * (1 - rem_max) if rem_max is not None else None
                 maxi = cat * (1 - rem_min) if rem_min is not None else None
             else:
-                net = mini = maxi = cat  # 非 PAM 不打折，三列一致
+                net = mini = maxi = cat  # 非 PAM 不打折
 
             def fmt_unit(v):
                 return f"{v:,.2f} €/m" if v is not None else "NC"
 
             unit_rows.append({
-                "Fournisseur": fournisseur,
+                "Fournisseur": f"{fournisseur} ({long_u:g} m/tuyau)",
                 "Produit": nom,
                 f"Prix net {region}": fmt_unit(net),
-                "Prix net mini PAM National": fmt_unit(mini) if is_pam else "—",
-                "Prix net maxi PAM National": fmt_unit(maxi) if is_pam else "—",
+                "Prix mini PAM": fmt_unit(mini) if is_pam else "—",
+                "Prix maxi PAM": fmt_unit(maxi) if is_pam else "—",
             })
 
             def fmt_total(v):
-                if v is None or not nb_tuyaux:
-                    return "NC" if v is None else "—"
+                if v is None:
+                    return "NC"
+                if not nb_tuyaux:
+                    return "—"
                 return f"{v * long_u * nb_tuyaux:,.2f} €"
 
             total_rows.append({
-                "Fournisseur": fournisseur,
+                "Fournisseur": f"{fournisseur} ({long_u:g} m/tuyau)",
                 "Produit": nom,
-                f"Prix net Totaux {region}": fmt_total(net),
-                "Prix Totaux mini PAM National": fmt_total(mini) if is_pam else "—",
-                "Prix Totaux maxi PAM National": fmt_total(maxi) if is_pam else "—",
+                f"Prix net {region}": fmt_total(net),
+                "Prix mini PAM": fmt_total(mini) if is_pam else "—",
+                "Prix maxi PAM": fmt_total(maxi) if is_pam else "—",
             })
 
     if nc_flag:
         st.warning(f"⚠️ PAM : NC pour {region} sur au moins une référence de cette sélection.")
 
-    st.write(f"### Prix unitaires (€/m) — {long_u:g} m par tuyau")
+    st.write("### Prix unitaires (€/m)")
     st.dataframe(pd.DataFrame(unit_rows), hide_index=True, use_container_width=True)
 
     st.write("### Prix totaux")
-    if nb_tuyaux:
-        st.caption(f"Pour {qty} ml → {nb_tuyaux} tuyau(x) de {long_u:g} m commandé(s) ({nb_tuyaux * long_u:g} ml facturés).")
+    if qty:
+        st.caption(f"Pour {qty} ml demandés — nombre de tuyaux et ml facturés calculés selon la longueur propre à chaque fournisseur.")
         st.dataframe(pd.DataFrame(total_rows), hide_index=True, use_container_width=True)
     else:
         st.info("Saisissez une quantité (ml) pour afficher les prix totaux.")
