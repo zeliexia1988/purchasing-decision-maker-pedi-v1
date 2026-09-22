@@ -234,8 +234,8 @@ def calculate_negoce_totals(material, de, pn, quantity, package, today):
 # ===============================
 # 4. Streamlit UI
 # ===============================
-page = st.sidebar.radio("Outil", ["Décision d'achat", "Prix Fonte par région"])
-if page == "Prix Fonte par région":
+page = st.sidebar.radio("Outil", ["Tuyaux PEHD", "Tuyaux Fonte"])
+if page == "Tuyaux Fonte":
     render_fonte_pricing()
     st.stop()
 
