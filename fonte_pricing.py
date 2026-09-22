@@ -141,8 +141,8 @@ def render_fonte_pricing():
                 "Fournisseur": fournisseur,
                 "Produit": nom,
                 f"Prix net {region}": fmt_unit(net),
-                "Prix mini PAM National": fmt_unit(mini) if is_pam else "—",
-                "Prix maxi PAM National": fmt_unit(maxi) if is_pam else "—",
+                "Prix net mini PAM National": fmt_unit(mini) if is_pam else "—",
+                "Prix net maxi PAM National": fmt_unit(maxi) if is_pam else "—",
             })
 
             def fmt_total(v):
@@ -153,9 +153,9 @@ def render_fonte_pricing():
             total_rows.append({
                 "Fournisseur": fournisseur,
                 "Produit": nom,
-                f"Prix net {region}": fmt_total(net),
-                "Prix mini PAM National": fmt_total(mini) if is_pam else "—",
-                "Prix maxi PAM National": fmt_total(maxi) if is_pam else "—",
+                f"Prix net Totaux {region}": fmt_total(net),
+                "Prix Totaux mini PAM National": fmt_total(mini) if is_pam else "—",
+                "Prix Totaux maxi PAM National": fmt_total(maxi) if is_pam else "—",
             })
 
     if nc_flag:
