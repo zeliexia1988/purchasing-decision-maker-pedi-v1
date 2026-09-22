@@ -94,7 +94,7 @@ def render_fonte_pricing():
     classes = sorted(df_dn["Classe"].unique())
     classe = c2.selectbox("Classe", classes)
     region = c3.selectbox("Région", regions)
-    qty = c4.number_input("Quantité (ml)", min_value=0, step=1)
+    qty = c4.number_input("Quantité (ml)", min_value=0, step=1, value=100)
 
     rows = df_dn[df_dn["Classe"] == classe]
     if rows.empty:
@@ -162,11 +162,11 @@ def render_fonte_pricing():
         st.warning(f"⚠️ PAM : NC pour {region} sur au moins une référence de cette sélection.")
 
     st.write(f"### Prix unitaires (€/m) — {long_u:g} m par tuyau")
-    st.table(pd.DataFrame(unit_rows))
+    st.dataframe(pd.DataFrame(unit_rows), hide_index=True, use_container_width=True)
 
     st.write("### Prix totaux")
     if nb_tuyaux:
         st.caption(f"Pour {qty} ml → {nb_tuyaux} tuyau(x) de {long_u:g} m commandé(s) ({nb_tuyaux * long_u:g} ml facturés).")
-        st.table(pd.DataFrame(total_rows))
+        st.dataframe(pd.DataFrame(total_rows), hide_index=True, use_container_width=True)
     else:
         st.info("Saisissez une quantité (ml) pour afficher les prix totaux.")
