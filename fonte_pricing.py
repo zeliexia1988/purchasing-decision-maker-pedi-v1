@@ -1,3 +1,4 @@
+import math
 import re
 import pandas as pd
 import streamlit as st
@@ -93,7 +94,7 @@ def render_fonte_pricing():
     classes = sorted(df_dn["Classe"].unique())
     classe = c2.selectbox("Classe", classes)
     region = c3.selectbox("Région", regions)
-    qty = c4.number_input("Quantité (ml) – optionnel", min_value=0, step=1)
+    qty = c4.number_input("Quantité (ml)", min_value=0, step=1)
 
     rows = df_dn[df_dn["Classe"] == classe]
     if rows.empty:
@@ -101,9 +102,12 @@ def render_fonte_pricing():
         return
 
     long_u = rows["Long"].iloc[0] if pd.notna(rows["Long"].iloc[0]) else 6
+    nb_tuyaux = math.ceil(qty / long_u) if qty and long_u else 0
+
     produits = [("Tuyau seul", "P_seul"), ("Tuyau + joint STD", "P_std"), ("Tuyau + joint STD Vi", "P_vi")]
 
-    table_rows = []
+    unit_rows = []
+    total_rows = []
     nc_flag = False
 
     for _, row in rows.iterrows():
@@ -112,8 +116,8 @@ def render_fonte_pricing():
 
         rem_region = row[region] if is_pam else None
         rem_values = [row[r] for r in regions if row[r] is not None] if is_pam else []
-        rem_max = max(rem_values) if rem_values else None   # -> prix mini
-        rem_min = min(rem_values) if rem_values else None   # -> prix maxi
+        rem_max = max(rem_values) if rem_values else None   # remise max -> prix mini
+        rem_min = min(rem_values) if rem_values else None   # remise min -> prix maxi
 
         if is_pam and rem_region is None:
             nc_flag = True
@@ -128,28 +132,41 @@ def render_fonte_pricing():
                 mini = cat * (1 - rem_max) if rem_max is not None else None
                 maxi = cat * (1 - rem_min) if rem_min is not None else None
             else:
-                net = cat  # 非 PAM 不打折
-                mini = maxi = None
+                net = mini = maxi = cat  # 非 PAM 不打折，三列一致
 
-            def fmt(v):
-                return f"{v:,.2f} €" if v is not None else "NC"
+            def fmt_unit(v):
+                return f"{v:,.2f} €/m" if v is not None else "NC"
 
-            def fmt_pair(v):
-                return f"{v:,.2f} €/m ({v * long_u:,.2f} €/tuyau)" if v is not None else "—"
-
-            table_rows.append({
+            unit_rows.append({
                 "Fournisseur": fournisseur,
                 "Produit": nom,
-                f"Prix net {region} (€/m)": fmt(net),
-                "Prix total tuyau (€)": fmt(net * long_u) if net is not None else "NC",
-                "Prix mini PAM": fmt_pair(mini),
-                "Prix maxi PAM": fmt_pair(maxi),
+                f"Prix net {region}": fmt_unit(net),
+                "Prix mini PAM": fmt_unit(mini) if is_pam else "—",
+                "Prix maxi PAM": fmt_unit(maxi) if is_pam else "—",
+            })
+
+            def fmt_total(v):
+                if v is None or not nb_tuyaux:
+                    return "NC" if v is None else "—"
+                return f"{v * long_u * nb_tuyaux:,.2f} €"
+
+            total_rows.append({
+                "Fournisseur": fournisseur,
+                "Produit": nom,
+                f"Prix net {region}": fmt_total(net),
+                "Prix mini PAM": fmt_total(mini) if is_pam else "—",
+                "Prix maxi PAM": fmt_total(maxi) if is_pam else "—",
             })
 
     if nc_flag:
         st.warning(f"⚠️ PAM : NC pour {region} sur au moins une référence de cette sélection.")
 
-    st.table(pd.DataFrame(table_rows))
+    st.write(f"### Prix unitaires (€/m) — {long_u:g} m par tuyau")
+    st.table(pd.DataFrame(unit_rows))
 
-    if qty:
-        st.caption(f"Pour {qty} ml, multipliez le prix net (€/m) ci-dessus par {qty}.")
+    st.write("### Prix totaux")
+    if nb_tuyaux:
+        st.caption(f"Pour {qty} ml → {nb_tuyaux} tuyau(x) de {long_u:g} m commandé(s) ({nb_tuyaux * long_u:g} ml facturés).")
+        st.table(pd.DataFrame(total_rows))
+    else:
+        st.info("Saisissez une quantité (ml) pour afficher les prix totaux.")
