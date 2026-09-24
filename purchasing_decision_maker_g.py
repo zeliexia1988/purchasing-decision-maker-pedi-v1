@@ -4,6 +4,7 @@ import math
 import urllib.parse
 from datetime import datetime
 from fonte_pricing import render_fonte_pricing
+from vanne_pricing import render_vanne_pricing
 
 # ===============================
 # 1. 基础配置与数据加载
@@ -237,6 +238,9 @@ def calculate_negoce_totals(material, de, pn, quantity, package, today):
 page = st.sidebar.radio("🛡️ SADE Purchasing Decision Support", ["Tuyaux PEHD", "Tuyaux Fonte"])
 if page == "Tuyaux Fonte":
     render_fonte_pricing()
+    st.stop()
+if page == "Prix Vannes":
+    render_vanne_pricing()
     st.stop()
 
 st.title("Tuyaux PEHD Prix maximum conseillé")
