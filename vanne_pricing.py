@@ -57,7 +57,6 @@ def render_vanne_pricing():
     col_gauche, col_droite = st.columns([1.5, 4])
 
     with col_gauche:
-        st.subheader("Critères")
         subset = df.copy()
         tout_selectionne = True
 
@@ -76,8 +75,7 @@ def render_vanne_pricing():
         qty = st.number_input("Quantité (unités)", min_value=0, step=1, value=1)
 
     with col_droite:
-        st.subheader("Résultats")
-
+        
         if not tout_selectionne:
             st.info("Sélectionnez toutes les options ci-contre pour afficher les résultats.")
         elif subset.empty:
