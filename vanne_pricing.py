@@ -82,7 +82,9 @@ def render_vanne_pricing():
 
     qty = st.number_input("Quantité (unités)", min_value=0, step=1, value=1)
 
-    resultat = subset["Fournisseur", "Prix unitaire"].copy()
+    resultat = subset[["Fournisseur", "Prix unitaire"]].copy()
+            
+    
     if qty:
         resultat["Prix total"] = resultat["Prix unitaire"] * qty
         resultat["Prix total"] = resultat["Prix total"].map(lambda v: f"{v:,.2f} €")
