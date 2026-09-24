@@ -43,7 +43,6 @@ def load_vanne(path=FICHIER):
 
 
 def render_vanne_pricing():
-    
     st.title("Vannes Prix maximum conseillé")
 
     try:
@@ -56,20 +55,26 @@ def render_vanne_pricing():
         return
 
     subset = df.copy()
-    choix = {}
+    tout_selectionne = True
 
     for col in COLONNES:
         options = sorted(subset[col].dropna().unique(), key=_sort_key)
         if not options:
+            # Cette colonne n'a aucune valeur dans le périmètre actuel -> pas de contrainte, on saute
             continue
 
-        val = st.selectbox(col, options, index=None, placeholder="Choisir (optionnel)...", key=f"vanne_{col}")
-        choix[col] = val
+        val = st.selectbox(col, options, index=None, placeholder="Choisir...", key=f"vanne_{col}")
 
-        if val is not None:
+        if val is None:
+            tout_selectionne = False
+        else:
             subset = subset[(subset[col] == val) | (subset[col].isna())]
 
     st.divider()
+
+    if not tout_selectionne:
+        st.info("Sélectionnez toutes les options ci-dessus pour afficher les résultats.")
+        return
 
     if subset.empty:
         st.warning("Aucun résultat pour cette combinaison de critères.")
