@@ -33,16 +33,14 @@ def load_vanne(path=FICHIER):
         raise ValueError(f"Colonnes introuvables ({manquantes}) dans {path}. "
                           f"Colonnes lues : {list(df.columns)}")
 
-    # DN / PN peuvent contenir du texte (ex. "PN10/16") -> on garde en texte, pas de conversion numérique
     for c in ["DN", "PN"]:
         df[c] = df[c].apply(lambda x: str(x).strip() if pd.notna(x) else None)
 
     df["Prix unitaire"] = pd.to_numeric(df["Prix unitaire"], errors="coerce")
     df["Franco"] = pd.to_numeric(df["Franco"], errors="coerce")
-            
+
     df = df.dropna(subset=["Fournisseur", "Prix unitaire"], how="all")
     return df
-
 
 def render_vanne_pricing():
     st.title("Vannes Prix maximum conseillé")
