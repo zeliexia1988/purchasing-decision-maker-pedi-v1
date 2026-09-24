@@ -239,6 +239,10 @@ page = st.sidebar.radio("🛡️ SADE Purchasing Decision Support", ["Tuyaux PEH
 if page == "Tuyaux Fonte":
     render_fonte_pricing()
     st.stop()
+if page == "Prix Vannes":
+    render_vanne_pricing()
+    st.stop()
+    
 st.title("Tuyaux PEHD Prix maximum conseillé")
 
 if contracts is not None:
