@@ -100,7 +100,7 @@ def render_vanne_pricing():
             resultat["Prix unitaire"] = resultat["Prix unitaire"].map(lambda v: f"{v:,.2f} €")
             resultat = resultat.drop(columns=["Franco"])
 
-            st.write(f"**{len(resultat)} référence(s) correspondante(s)**")
+            st.write("### 💰 Comparatif des prix contractuels des Fournisseur")
             st.dataframe(
                 resultat,
                 hide_index=True,
