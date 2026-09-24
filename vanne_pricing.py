@@ -54,7 +54,7 @@ def render_vanne_pricing():
         st.error(f"Erreur de lecture de {FICHIER} : {e}")
         return
 
-    col_gauche, col_droite = st.columns([1, 5])
+    col_gauche, col_droite = st.columns([1, 4])
 
     with col_gauche:
         st.subheader("Critères")
