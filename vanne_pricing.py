@@ -43,7 +43,8 @@ def load_vanne(path=FICHIER):
 
 
 def render_vanne_pricing():
-    st.title("🚰 Prix Vannes")
+    
+    st.title("Vannes Prix maximum conseillé")
 
     try:
         df = load_vanne()
