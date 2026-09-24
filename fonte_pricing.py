@@ -23,62 +23,60 @@ def _to_rate(x):
 def _is_pam(fournisseur):
     return "pam" in str(fournisseur).lower()
 
-
+COLONNES_FIXES = {
+    "Gamme": "Gamme",
+    "DN": "DN",
+    "Long": "Long. utile moyenne (m)",
+    "Classe": "Classe tuyau",
+    "P_seul": "Prix tuyau seul (€/m)",
+    "P_std": "Prix avec joint STD (€/m)",
+    "P_vi": "Prix avec joint STD Vi (€/m)",
+    "Fournisseur": "Fournisseur",
+    "Reference": "Référence fournisseur",
+}
 @st.cache_data
 def load_fonte(path=FICHIER):
     df = pd.read_excel(path)
     df.columns = [_norm(c) for c in df.columns]
 
-    def find(pred):
-        return next((c for c in df.columns if pred(c.lower())), None)
-
-    c_gamme = find(lambda l: l == "gamme")
-    c_dn = find(lambda l: l == "dn")
-    c_len = find(lambda l: l.startswith("long"))
-    c_cl = find(lambda l: l.startswith("classe"))
-    c_seul = find(lambda l: "seul" in l)
-    c_vi = find(lambda l: "std vi" in l)
-    c_std = find(lambda l: "std" in l and "std vi" not in l and "code" not in l)
-    c_frn = find(lambda l: "fournisseur" in l)
-
-    required = {"DN": c_dn, "Long. utile": c_len, "Classe": c_cl,
-                "Prix seul": c_seul, "Prix STD": c_std, "Prix STD Vi": c_vi,
-                "Fournisseur": c_frn}
-    missing = [k for k, v in required.items() if v is None]
-    if missing:
-        raise ValueError(f"Colonnes introuvables ({missing}) dans {path}. "
+    manquantes = [nom for nom in COLONNES_FIXES.values() if nom not in df.columns]
+    if manquantes:
+        raise ValueError(f"Colonnes introuvables ({manquantes}) dans {path}. "
                           f"Colonnes lues : {list(df.columns)}")
 
     # 合并单元格（Gamme/DN/Classe/Long 只在区块第一行有值，下方为空）向下填充
-    if c_gamme:
-        df[c_gamme] = df[c_gamme].ffill()
-    df[c_dn] = df[c_dn].ffill()
-    df[c_cl] = df[c_cl].ffill()
-    df[c_len] = df[c_len].ffill()
+    df[COLONNES_FIXES["Gamme"]] = df[COLONNES_FIXES["Gamme"]].ffill()
+    df[COLONNES_FIXES["DN"]] = df[COLONNES_FIXES["DN"]].ffill()
+    df[COLONNES_FIXES["Classe"]] = df[COLONNES_FIXES["Classe"]].ffill()
+    df[COLONNES_FIXES["Long"]] = df[COLONNES_FIXES["Long"]].ffill()
 
+    fixed_cols = list(COLONNES_FIXES.values())
     code_cols = [c for c in df.columns if "code" in c.lower()]
-    fixed = [c for c in [c_gamme, c_dn, c_len, c_cl, c_seul, c_std, c_vi, c_frn] if c] + code_cols
+    fixed = fixed_cols + code_cols
     regions = [c for c in df.columns if c not in fixed]
 
-    # 只有价格三列全空、且供应商也空的行才算真正的空行，才丢弃
-    df = df.dropna(subset=[c_frn, c_seul, c_std, c_vi], how="all").copy()
+    df = df.dropna(
+        subset=[COLONNES_FIXES["Fournisseur"], COLONNES_FIXES["P_seul"],
+                COLONNES_FIXES["P_std"], COLONNES_FIXES["P_vi"]],
+        how="all",
+    ).copy()
 
-    df["DN"] = pd.to_numeric(df[c_dn], errors="coerce")
+    df["DN"] = pd.to_numeric(df[COLONNES_FIXES["DN"]], errors="coerce")
     df = df.dropna(subset=["DN"])
     df["DN"] = df["DN"].astype(int)
-    df["Gamme"] = df[c_gamme].astype(str).str.strip() if c_gamme else "AEP"
-    df["Classe"] = df[c_cl].astype(str).str.strip()
-    df["Long"] = pd.to_numeric(df[c_len], errors="coerce")
-    df["P_seul"] = pd.to_numeric(df[c_seul], errors="coerce")
-    df["P_std"] = pd.to_numeric(df[c_std], errors="coerce")
-    df["P_vi"] = pd.to_numeric(df[c_vi], errors="coerce")
-    df["Fournisseur"] = df[c_frn].astype(str).str.strip()
+    df["Gamme"] = df[COLONNES_FIXES["Gamme"]].astype(str).str.strip()
+    df["Classe"] = df[COLONNES_FIXES["Classe"]].astype(str).str.strip()
+    df["Long"] = pd.to_numeric(df[COLONNES_FIXES["Long"]], errors="coerce")
+    df["P_seul"] = pd.to_numeric(df[COLONNES_FIXES["P_seul"]], errors="coerce")
+    df["P_std"] = pd.to_numeric(df[COLONNES_FIXES["P_std"]], errors="coerce")
+    df["P_vi"] = pd.to_numeric(df[COLONNES_FIXES["P_vi"]], errors="coerce")
+    df["Fournisseur"] = df[COLONNES_FIXES["Fournisseur"]].astype(str).str.strip()
+    df["Reference"] = df[COLONNES_FIXES["Reference"]].astype(str).str.strip()
+
     for r in regions:
         df[r] = df[r].apply(_to_rate)
 
     return df, regions
-
-
 def render_fonte_pricing():
     st.title("Tuyaux Fonte Prix maximum conseillé")
 
