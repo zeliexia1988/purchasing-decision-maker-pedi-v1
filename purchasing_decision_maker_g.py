@@ -239,7 +239,7 @@ page = st.sidebar.radio("🛡️ SADE Purchasing Decision Support", ["Tuyaux PEH
 if page == "Tuyaux Fonte":
     render_fonte_pricing()
     st.stop()
-if page == "Prix Vannes":
+if page == "Vannes":
     render_vanne_pricing()
     st.stop()
     
