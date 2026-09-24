@@ -151,6 +151,7 @@ def render_fonte_pricing():
 
             unit_rows.append({
                 "Fournisseur": f"{fournisseur} ({long_u:g} m/tuyau)",
+                "Référence fournisseur": row["Reference"],
                 "Produit": nom,
                 f"Prix net {region}": fmt_unit(net),
                 "Prix mini PAM": fmt_unit(mini) if is_pam else "—",
@@ -166,6 +167,7 @@ def render_fonte_pricing():
 
             total_rows.append({
                 "Fournisseur": f"{fournisseur} ({long_u:g} m/tuyau)",
+                "Référence fournisseur": row["Reference"],
                 "Produit": nom,
                 f"Prix net {region}": fmt_total(net),
                 "Prix mini PAM": fmt_total(mini) if is_pam else "—",
