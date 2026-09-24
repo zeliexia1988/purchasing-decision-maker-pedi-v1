@@ -54,41 +54,40 @@ def render_vanne_pricing():
         st.error(f"Erreur de lecture de {FICHIER} : {e}")
         return
 
-    subset = df.copy()
-    tout_selectionne = True
+    col_gauche, col_droite = st.columns([1, 2])
 
-    for col in COLONNES:
-        options = sorted(subset[col].dropna().unique(), key=_sort_key)
-        if not options:
-            # Cette colonne n'a aucune valeur dans le périmètre actuel -> pas de contrainte, on saute
-            continue
+    with col_gauche:
+        st.subheader("Critères")
+        subset = df.copy()
+        tout_selectionne = True
 
-        val = st.selectbox(col, options, index=None, placeholder="Choisir...", key=f"vanne_{col}")
+        for col in COLONNES:
+            options = sorted(subset[col].dropna().unique(), key=_sort_key)
+            if not options:
+                continue
 
-        if val is None:
-            tout_selectionne = False
+            val = st.selectbox(col, options, index=None, placeholder="Choisir...", key=f"vanne_{col}")
+
+            if val is None:
+                tout_selectionne = False
+            else:
+                subset = subset[(subset[col] == val) | (subset[col].isna())]
+
+        qty = st.number_input("Quantité (unités)", min_value=0, step=1, value=1)
+
+    with col_droite:
+        st.subheader("Résultats")
+
+        if not tout_selectionne:
+            st.info("Sélectionnez toutes les options ci-contre pour afficher les résultats.")
+        elif subset.empty:
+            st.warning("Aucun résultat pour cette combinaison de critères.")
         else:
-            subset = subset[(subset[col] == val) | (subset[col].isna())]
+            resultat = subset[["Fournisseur", "Prix unitaire"]].copy()
+            if qty:
+                resultat["Prix total"] = resultat["Prix unitaire"] * qty
+                resultat["Prix total"] = resultat["Prix total"].map(lambda v: f"{v:,.2f} €")
+            resultat["Prix unitaire"] = resultat["Prix unitaire"].map(lambda v: f"{v:,.2f} €")
 
-    st.divider()
-
-    if not tout_selectionne:
-        st.info("Sélectionnez toutes les options ci-dessus pour afficher les résultats.")
-        return
-
-    if subset.empty:
-        st.warning("Aucun résultat pour cette combinaison de critères.")
-        return
-
-    qty = st.number_input("Quantité (unités)", min_value=0, step=1, value=1)
-
-    resultat = subset[["Fournisseur", "Prix unitaire"]].copy()
-            
-    
-    if qty:
-        resultat["Prix total"] = resultat["Prix unitaire"] * qty
-        resultat["Prix total"] = resultat["Prix total"].map(lambda v: f"{v:,.2f} €")
-    resultat["Prix unitaire"] = resultat["Prix unitaire"].map(lambda v: f"{v:,.2f} €")
-
-    st.write(f"### Résultats ({len(resultat)} référence(s) correspondante(s))")
-    st.dataframe(resultat, hide_index=True, use_container_width=True)
+            st.write(f"**{len(resultat)} référence(s) correspondante(s)**")
+            st.dataframe(resultat, hide_index=True, use_container_width=True)
