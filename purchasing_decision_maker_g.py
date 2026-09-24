@@ -241,11 +241,6 @@ if page == "Tuyaux Fonte":
     st.stop()
 st.title("Tuyaux PEHD Prix maximum conseillé")
 
-if page == "Prix Vannes":
-    render_vanne_pricing()
-    st.stop()
-st.title("Vannes Prix maximum conseillé")
-
 if contracts is not None:
     with st.form("purchase_form"):
         col1, col2 = st.columns(2)
