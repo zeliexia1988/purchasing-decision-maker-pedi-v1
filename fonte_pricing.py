@@ -80,7 +80,7 @@ def load_fonte(path=FICHIER):
 
 
 def render_fonte_pricing():
-    st.title("🔩 Prix net Fonte ductile par région")
+    st.title("Tuyaux Fonte Prix maximum conseillé")
 
     try:
         df, regions = load_fonte()
