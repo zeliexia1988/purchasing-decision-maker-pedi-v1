@@ -93,19 +93,30 @@ def render_fonte_pricing():
 
     c0, c1, c2, c3, c4 = st.columns(5)
     gammes = sorted(df["Gamme"].dropna().unique())
-    gamme = c0.selectbox("Gamme", gammes)
+    gamme = c0.selectbox("Gamme", gammes, index=None, placeholder="Choisir...")
+    if gamme is None:
+        st.info("Sélectionnez une Gamme pour commencer.")
+        return
     df_g = df[df["Gamme"] == gamme]
 
     if df_g.empty:
         st.warning(f"Aucune ligne trouvée pour la gamme {gamme}.")
         return
 
-    dn = c1.selectbox("DN", sorted(df_g["DN"].unique()))
+    dn = c1.selectbox("DN", sorted(df_g["DN"].unique()), index=None, placeholder="Choisir...")
+    if dn is None:
+        return
     df_dn = df_g[df_g["DN"] == dn]
 
     classes = sorted(df_dn["Classe"].unique())
-    classe = c2.selectbox("Classe", classes)
-    region = c3.selectbox("Région", regions)
+    classe = c2.selectbox("Classe", classes, index=None, placeholder="Choisir...")
+    if classe is None:
+        return
+
+    region = c3.selectbox("Région", regions, index=None, placeholder="Choisir...")
+    if region is None:
+        return
+
     qty = c4.number_input("Quantité (ml)", min_value=0, step=1, value=100)
 
     rows = df_dn[df_dn["Classe"] == classe]
