@@ -61,14 +61,12 @@ def render_vanne_pricing():
     for col in COLONNES:
         options = sorted(subset[col].dropna().unique(), key=_sort_key)
         if not options:
-            # Cette colonne n'a aucune valeur dans le périmètre actuel -> pas de contrainte, on saute
             continue
 
-        label = f"{col} (optionnel)"
-        val = st.selectbox(label, ["Tous"] + list(options), key=f"vanne_{col}")
+        val = st.selectbox(col, options, index=None, placeholder="Choisir (optionnel)...", key=f"vanne_{col}")
         choix[col] = val
 
-        if val != "Tous":
+        if val is not None:
             subset = subset[(subset[col] == val) | (subset[col].isna())]
 
     st.divider()
