@@ -108,6 +108,6 @@ def render_vanne_pricing():
                 hide_index=True,
                 use_container_width=True,
                 column_config={
-                    "Fournisseur": st.column_config.TextColumn("Fournisseur", width="small"),
+                    "Fournisseur": st.column_config.TextColumn("Fournisseur", width="medium"),
                 },
             )
