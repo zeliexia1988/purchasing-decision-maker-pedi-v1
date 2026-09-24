@@ -108,7 +108,7 @@ def render_fonte_pricing():
     qty = c4.number_input("Quantité (ml)", min_value=0, step=1, value=0)
 
     if None in (gamme, dn, classe, region):
-        st.info("Sélectionnez Gamme, DN, Classe et Région pour afficher les résultats.")
+        st.info("Sélectionnez toutes les options ci-dessus pour afficher les résultats.")
         return
 
     rows = df_dn[df_dn["Classe"] == classe]
