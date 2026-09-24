@@ -32,7 +32,9 @@ COLONNES_FIXES = {
     "P_std": "Prix avec joint STD (€/m)",
     "P_vi": "Prix avec joint STD Vi (€/m)",
     "Fournisseur": "Fournisseur",
-    "Reference": "Référence fournisseur",
+    "Ref_seul": "Référence fournisseur - Tuyau seul",
+    "Ref_std": "Référence fournisseur - Joint STD",
+    "Ref_vi": "Référence fournisseur - Joint STD Vi",
 }
 @st.cache_data
 def load_fonte(path=FICHIER):
@@ -71,7 +73,9 @@ def load_fonte(path=FICHIER):
     df["P_std"] = pd.to_numeric(df[COLONNES_FIXES["P_std"]], errors="coerce")
     df["P_vi"] = pd.to_numeric(df[COLONNES_FIXES["P_vi"]], errors="coerce")
     df["Fournisseur"] = df[COLONNES_FIXES["Fournisseur"]].astype(str).str.strip()
-    df["Reference"] = df[COLONNES_FIXES["Reference"]].astype(str).str.strip()
+    df["Ref_seul"] = df[COLONNES_FIXES["Ref_seul"]].astype(str).str.strip()
+    df["Ref_std"] = df[COLONNES_FIXES["Ref_std"]].astype(str).str.strip()
+    df["Ref_vi"] = df[COLONNES_FIXES["Ref_vi"]].astype(str).str.strip()
 
     for r in regions:
         df[r] = df[r].apply(_to_rate)
@@ -114,7 +118,11 @@ def render_fonte_pricing():
         st.warning("Aucune donnée pour cette combinaison.")
         return
 
-    produits = [("Tuyau seul", "P_seul"), ("Tuyau + joint STD", "P_std"), ("Tuyau + joint STD Vi", "P_vi")]
+            produits = [
+        ("Tuyau seul", "P_seul", "Ref_seul"),
+        ("Tuyau + joint STD", "P_std", "Ref_std"),
+        ("Tuyau + joint STD Vi", "P_vi", "Ref_vi"),
+    ]
 
     unit_rows = []
     total_rows = []
@@ -134,7 +142,21 @@ def render_fonte_pricing():
         if is_pam and rem_region is None:
             nc_flag = True
 
-        for nom, col in produits:
+            for _, row in rows.iterrows():
+        fournisseur = row["Fournisseur"]
+        is_pam = _is_pam(fournisseur)
+        long_u = row["Long"] if pd.notna(row["Long"]) else 6
+        nb_tuyaux = math.ceil(qty / long_u) if qty and long_u else 0
+
+        rem_region = row[region] if is_pam else None
+        rem_values = [row[r] for r in regions if row[r] is not None] if is_pam else []
+        rem_max = max(rem_values) if rem_values else None
+        rem_min = min(rem_values) if rem_values else None
+
+        if is_pam and rem_region is None:
+            nc_flag = True
+
+        for nom, col, ref_col in produits:
             cat = row[col]
             if pd.isna(cat):
                 continue
@@ -152,7 +174,7 @@ def render_fonte_pricing():
             unit_rows.append({
                 "Fournisseur": f"{fournisseur} ({long_u:g} m/tuyau)",
                 "Produit": nom,
-                "Référence Fournisseur": row["Reference"],
+                "Référence fournisseur": row[ref_col],
                 f"Prix net {region}": fmt_unit(net),
                 "Prix mini PAM": fmt_unit(mini) if is_pam else "—",
                 "Prix maxi PAM": fmt_unit(maxi) if is_pam else "—",
@@ -168,12 +190,11 @@ def render_fonte_pricing():
             total_rows.append({
                 "Fournisseur": f"{fournisseur} ({long_u:g} m/tuyau)",
                 "Produit": nom,
-                "Référence Fournisseur": row["Reference"],
+                "Référence fournisseur": row[ref_col],
                 f"Prix net {region}": fmt_total(net),
                 "Prix mini PAM": fmt_total(mini) if is_pam else "—",
                 "Prix maxi PAM": fmt_total(maxi) if is_pam else "—",
             })
-
     if nc_flag:
         st.warning(f"⚠️ PAM : NC pour {region} sur au moins une référence de cette sélection.")
 
