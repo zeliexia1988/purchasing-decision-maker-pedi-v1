@@ -328,4 +328,4 @@ if contracts is not None:
                 unsafe_allow_html=True,
             )
     else:
-       st.info("Sélectionnez toutes les options ci-dessus pour afficher les résultats.")
+       st.info("Remplissez tous les champs puis cliquez sur Run Decision")
