@@ -27,7 +27,8 @@ def load_vanne(path=FICHIER):
     df = pd.read_excel(path)
     df.columns = [_norm(c) for c in df.columns]
 
-    manquantes = [c for c in COLONNES + ["Fournisseur", "Prix unitaire"] if c not in df.columns]
+    manquantes = [c for c in COLONNES + ["Fournisseur", "Prix unitaire", "Référence fournisseur", "Franco"]
+                  if c not in df.columns]
     if manquantes:
         raise ValueError(f"Colonnes introuvables ({manquantes}) dans {path}. "
                           f"Colonnes lues : {list(df.columns)}")
@@ -37,7 +38,8 @@ def load_vanne(path=FICHIER):
         df[c] = df[c].apply(lambda x: str(x).strip() if pd.notna(x) else None)
 
     df["Prix unitaire"] = pd.to_numeric(df["Prix unitaire"], errors="coerce")
-
+    df["Franco"] = pd.to_numeric(df["Franco"], errors="coerce")
+            
     df = df.dropna(subset=["Fournisseur", "Prix unitaire"], how="all")
     return df
 
@@ -83,11 +85,22 @@ def render_vanne_pricing():
         elif subset.empty:
             st.warning("Aucun résultat pour cette combinaison de critères.")
         else:
-            resultat = subset[["Fournisseur", "Prix unitaire"]].copy()
+            resultat = subset[["Fournisseur", "Rérérence fournisseur", "Prix unitaire"]].copy()
             if qty:
                 resultat["Prix total"] = resultat["Prix unitaire"] * qty
-                resultat["Prix total"] = resultat["Prix total"].map(lambda v: f"{v:,.2f} €")
+                def _statut_franco(row):
+                    if pd.isna(row["Franco"]):
+                        return "—"
+                    if row["Prix total (€)"] >= row["Franco"]:
+                        return "✅ Franco atteint"
+                    manque = row["Franco"] - row["Prix total (€)"]
+                    return f"⚠️ Reste {manque:,.2f} € pour atteindre le Franco ({row['Franco']:,.0f} €)"
+
+                resultat["Statut Franco"] = resultat.apply(_statut_franco, axis=1)
+                resultat["Prix total (€)"] = resultat["Prix total (€)"].map(lambda v: f"{v:,.2f} €")
+
             resultat["Prix unitaire"] = resultat["Prix unitaire"].map(lambda v: f"{v:,.2f} €")
+            resultat = resultat.drop(columns=["Franco"])
 
             st.write(f"**{len(resultat)} référence(s) correspondante(s)**")
             st.dataframe(resultat, hide_index=True, use_container_width=True)
