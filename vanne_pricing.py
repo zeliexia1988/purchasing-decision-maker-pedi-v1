@@ -77,7 +77,7 @@ def render_vanne_pricing():
 
         qty = st.number_input("Quantité (unités)", min_value=0, step=1, value=1)
 
-    with col_droite:
+        with col_droite:
         st.subheader("Résultats")
 
         if not tout_selectionne:
@@ -85,9 +85,11 @@ def render_vanne_pricing():
         elif subset.empty:
             st.warning("Aucun résultat pour cette combinaison de critères.")
         else:
-            resultat = subset[["Fournisseur", "Rérérence fournisseur", "Prix unitaire"]].copy()
+            resultat = subset[["Fournisseur", "Référence fournisseur", "Prix unitaire", "Franco"]].copy()
+
             if qty:
-                resultat["Prix total"] = resultat["Prix unitaire"] * qty
+                resultat["Prix total (€)"] = resultat["Prix unitaire"] * qty
+
                 def _statut_franco(row):
                     if pd.isna(row["Franco"]):
                         return "—"
