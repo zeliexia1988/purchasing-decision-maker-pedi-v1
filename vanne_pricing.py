@@ -103,4 +103,11 @@ def render_vanne_pricing():
             resultat = resultat.drop(columns=["Franco"])
 
             st.write(f"**{len(resultat)} référence(s) correspondante(s)**")
-            st.dataframe(resultat, hide_index=True, use_container_width=True)
+            st.dataframe(
+                resultat,
+                hide_index=True,
+                use_container_width=True,
+                column_config={
+                    "Fournisseur": st.column_config.TextColumn("Fournisseur", width="small"),
+                },
+            )
