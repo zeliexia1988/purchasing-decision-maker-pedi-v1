@@ -77,7 +77,7 @@ def render_vanne_pricing():
 
         qty = st.number_input("Quantité (unités)", min_value=0, step=1, value=1)
 
-        with col_droite:
+    with col_droite:
         st.subheader("Résultats")
 
         if not tout_selectionne:
